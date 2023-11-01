@@ -1,10 +1,10 @@
 import express from 'express'
 import 'dotenv/config.js'
-import authRouter from './src/routes/auth.js'
-import userRouter from './src/routes/user.js'
+import authRouter from './routes/auth.js'
+import userRouter from './routes/user.js'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
-import { errorHandler } from './src/middlewares/errorHandler.js'
+import { errorHandler } from './middlewares/errorHandler.js'
 
 // ===== Config =====
 const server = express()
