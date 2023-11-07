@@ -18,16 +18,16 @@ router.get('/api/checkAdmin/:id', verifyToken, (req, res) => {
 })
 
 //update
-router.put('/api/update/:id', verifyToken, verifyUser, updateUser)
+router.put('/api/update/:id', updateUser)
 
 //delete
-router.delete('/api/delete/:id', verifyToken, verifyUser, deleteUser)
+router.delete('/api/delete/:id', deleteUser)
 
 //get user by id
-router.get('/api/get/:id', verifyToken, verifyUser, getUser)
+router.get('/api/get/:id', getUser)
 
 //get all users
-router.get('/api/get', verifyToken, verifyAdmin, getUsers)
+router.get('/api/get', getUsers)
 
 
 export default router

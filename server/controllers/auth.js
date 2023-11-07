@@ -1,6 +1,5 @@
 import { createError } from "../common/error.js"
-import { DataResponse } from "../common/response.js"
-import Users from "../models/Users.js"
+import User from "../models/User.js"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 
@@ -8,7 +7,7 @@ import jwt from 'jsonwebtoken'
 export const register = async (req, res, next) => {
     const { email, fullName, username, password } = req.body
     try {
-        let newUser = await Users.findOne({
+        let newUser = await User.findOne({
             where: {
                 username: username
             }
@@ -17,7 +16,7 @@ export const register = async (req, res, next) => {
             return next(createError(500, "User already exist!"))
         }
         const hash = bcrypt.hashSync(password, 13)
-        newUser = await Users.create({
+        newUser = await User.create({
             email,
             fullName,
             username,
@@ -26,7 +25,6 @@ export const register = async (req, res, next) => {
         return res.status(201).json({
             status: 201,
             message: "Register successfully",
-            data: newUser
         })
     } catch (error) {
         next(error)
@@ -37,7 +35,7 @@ export const register = async (req, res, next) => {
 export const login = async (req, res, next) => {
     // const { username, password } = req.body
     try {
-        const user = await Users.findOne({
+        const user = await User.findOne({
             where: {
                 username: req.body.username
             }
@@ -50,10 +48,10 @@ export const login = async (req, res, next) => {
             return next(createError(401, "UserName Or Password incorrect!"))
         }
         const payload = {
-            id: user.id,
-            isAdmin: user.isAdmin
+            username: user.username,
+            fullName: user.fullName
         }
-        const { username, password, isAdmin, ...otherDetails } = user.dataValues
+        const { username, password, ...otherDetails } = user.dataValues
         const token = jwt.sign(payload, process.env.SECRET)
         return res.cookie("access_token", token, {
             httpOnly: true

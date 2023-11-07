@@ -1,11 +1,10 @@
 import { DataTypes } from 'sequelize'
 
-// import SQLModel from '../common/SQLModel.js'
 import sequelize from '../database/database.js'
 
-const tableName = 'users'
+const tableName = 'user'
 
-const Users = sequelize.define(tableName, {
+const User = sequelize.define(tableName, {
     email: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -22,15 +21,11 @@ const Users = sequelize.define(tableName, {
     password: {
         type: DataTypes.STRING,
         allowNull: false,
-    },
-    isAdmin: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
     }
-}, { timestamp: true })
+}, { tableName: tableName, timestamps: true })
 
-await Users.sync().then(() => {
+await User.sync().then(() => {
     console.log(`${tableName} table is Ready!`)
 })
 
-export default Users
+export default User
