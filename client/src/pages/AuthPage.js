@@ -8,12 +8,12 @@ const AuthPage = () => {
 
     const navigate = useNavigate()
 
-    // useEffect(() => {
-    //     const userInfo = JSON.parse(localStorage.getItem("userInfo"))
-    //     if (userInfo) {
-    //         navigate("/home")
-    //     }
-    // }, [navigate])
+    useEffect(() => {
+        const userInfo = JSON.parse(localStorage.getItem("userInfo"))
+        if (userInfo) {
+            navigate("/home")
+        }
+    }, [navigate])
 
     return <Container maxW='xl' centerContent>
         <Box
@@ -48,17 +48,17 @@ const AuthPage = () => {
             borderRadius={"lg"}
             color={"black"}
             borderWidth={"1px"}>
-            <Tabs variant='soft-rounded' colorScheme='green'>
+            <Tabs variant='soft-rounded' colorScheme='blue'>
                 <TabList>
                     <Tab width={"50%"}>Login</Tab>
                     <Tab width={"50%"}>Sign Up</Tab>
                 </TabList>
                 <TabPanels>
                     <TabPanel>
-                        <Login></Login>
+                        <Login />
                     </TabPanel>
                     <TabPanel>
-                        <SignUp></SignUp>
+                        <SignUp />
                     </TabPanel>
                 </TabPanels>
             </Tabs>
