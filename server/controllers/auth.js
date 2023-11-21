@@ -48,13 +48,15 @@ export const login = async (req, res, next) => {
             return next(createError(401, "UserName Or Password incorrect!"))
         }
         const payload = {
+            id: user.id,
             username: user.username,
             fullName: user.fullName
         }
         const { username, password, ...otherDetails } = user.dataValues
         const token = jwt.sign(payload, process.env.SECRET)
-        return res.cookie("access_token", token, {
-            httpOnly: true
+        return res.cookie("token", token, {
+            // httpOnly: true,
+            expiresIn: '3h'
         }).status(200).json({
             status: 200,
             message: "Login successfully",

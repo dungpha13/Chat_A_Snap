@@ -13,18 +13,22 @@ export const createMessage = async (req, res, next) => {
                 await Box.findOne({ where: { id: boxId } })
                     .then(async (box) => {
                         if (box) {
-                            await Message.create(otherDetails)
-                                .then(async (message) => {
-                                    await message.setAuthor(user)
-                                    await message.setBox(box)
-                                    res.status(201).json({
-                                        status: 201,
-                                        message: "Create successfully",
-                                        data: message
-                                    })
-                                }).catch((err) => {
-                                    next(err)
-                                });
+                            if (await box.hasMembers(user)) {
+                                await Message.create(otherDetails)
+                                    .then(async (message) => {
+                                        await message.setAuthor(user)
+                                        await message.setBox(box)
+                                        res.status(201).json({
+                                            status: 201,
+                                            message: "Create successfully",
+                                            data: message
+                                        })
+                                    }).catch((err) => {
+                                        next(err)
+                                    });
+                            } else {
+                                next(createError(400, "User not in box!"))
+                            }
                         } else {
                             next(createError(404, "Box not found!"))
                         }

@@ -1,7 +1,7 @@
-import Box from "../models/Box.js";
 import { createError } from "../common/error.js"
 import User from "../models/User.js";
-import ChatBox from "../models/ChatBox.js";
+import Box from "../models/Box.js";
+import Message from "../models/Message.js";
 
 //create box
 export const createBox = async (req, res, next) => {
@@ -143,7 +143,7 @@ export const getUserInBox = async (req, res, next) => {
             }
         }]
     })
-        .then(async (result) => {
+        .then((result) => {
             // console.log(result);
             if (!result) {
                 next(createError(404, "Box not found!"))
@@ -152,6 +152,77 @@ export const getUserInBox = async (req, res, next) => {
                     status: 200,
                     message: "ok",
                     data: result
+                })
+            }
+        }).catch((err) => {
+            next(err)
+        });
+}
+
+//get message in box
+export const getMessageInBox = async (req, res, next) => {
+    await Box.findOne({
+        where: req.params
+        , include: [{
+            model: Message,
+            as: 'Messages',
+            // order: [['createdAt', 'DESC']],
+            include: [{
+                model: User,
+                as: 'Author',
+                attributes: { exclude: ['username', 'password'] },
+            }]
+            // through: {
+            //     attributes: [],
+            //     where: { isAdmin: false }
+            // }
+        }]
+    })
+        .then((result) => {
+            console.log(result);
+            if (!result) {
+                next(createError(404, "Box not found!"))
+            } else {
+                res.status(200).json({
+                    status: 200,
+                    message: "ok",
+                    data: result
+                })
+            }
+        }).catch((err) => {
+            next(err)
+        });
+}
+
+//get all box user have join
+export const getBoxByUser = async (req, res, next) => {
+    await Box.findAll({
+        include: [
+            {
+                model: User,
+                as: 'Members',
+                attributes: { exclude: ['username', 'password'] },
+                where: { id: req.user.id },
+                through: {
+                    attributes: [],
+                },
+            }]
+    })
+        .then(async (result) => {
+            if (!result.length) {
+                next(createError(404, "Box not found!"))
+            } else {
+                const results = await Promise.all(result.map(async (box) => {
+                    const allMembers = await box.getMembers({
+                        attributes: { exclude: ['username', 'password'] },
+                    });
+                    const result = { ...box.dataValues, allMembers };
+                    return result;
+                }));
+                res.status(200).json({
+                    status: 200,
+                    message: "ok",
+                    data: results
                 })
             }
         }).catch((err) => {

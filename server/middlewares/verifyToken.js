@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken"
 import { createError } from "../common/error.js"
 
 export const verifyToken = (req, res, next) => {
-    const token = req.cookies.access_token
+    const token = req.cookies.token
     if (!token) {
         return next(createError(401, "You are not authorized!"))
     }
@@ -15,16 +15,9 @@ export const verifyToken = (req, res, next) => {
     })
 }
 
-export const verifyUser = (req, res, next) => {
-    if (req.user.id === parseInt(req.params.id)) {
-        return next()
-    }
-    next(createError(403, "You do not have permission"))
-}
-
-export const verifyAdmin = (req, res, next) => {
-    if (req.user.isAdmin) {
-        return next()
-    }
-    next(createError(403, "You do not have permission"))
-}
+// export const verifyUser = (req, res, next) => {
+//     if (req.user.id === parseInt(req.params.id)) {
+//         return next()
+//     }
+//     next(createError(403, "You do not have permission"))
+// }

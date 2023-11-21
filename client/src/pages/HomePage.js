@@ -1,27 +1,69 @@
-import React from 'react'
-import { Box } from '@chakra-ui/react'
+import { Box, Center, Container, Tab, TabList, TabPanel, TabPanels, Tabs, Text } from '@chakra-ui/react'
+import React, { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import Login from '../components/auth/Login'
+import SignUp from '../components/auth/SignUp'
 
-import SideDrawer from '../components/miscellaneous/SideDrawer'
-import { ChatSate } from '../context/ChatProvider'
-import ServerChat from '../components/ServerChat'
+const AuthPage = () => {
 
-const HomePage = () => {
-    const { user } = ChatSate()
+    const navigate = useNavigate()
 
-    return (
-        <div style={{ width: "100%" }}>
-            {user && <SideDrawer />}
-            <Box
-                display="flex"
-                justifyContent="space-between"
-                w="100%"
-                h="91.5vh"
-                p="10px"
-            >
-                {user && <ServerChat />}
-            </Box>
-        </div>
-    )
+    useEffect(() => {
+        const userInfo = JSON.parse(localStorage.getItem("userInfo"))
+        if (userInfo) {
+            navigate("/")
+        }
+    }, [navigate])
+
+    return <Container maxW='xl' centerContent>
+        <Box
+            d='flex'
+            justifyContent={"center"}
+            p={3}
+            bg={"white"}
+            w="100%"
+            m="40px 0 15px 0"
+            borderRadius="lg"
+            borderWidth="1px"
+        >
+            <Center>
+                <Text
+                    bgGradient={[
+                        'linear(to-tr, teal.300, yellow.400)',
+                        'linear(to-t, blue.200, teal.500)',
+                        'linear(to-b, orange.100, purple.300)',
+                    ]}
+                    bgClip='text'
+                    fontSize='6xl'
+                    fontWeight='extrabold'
+                    fontFamily="Work sans"
+                >
+                    FFYS
+                </Text>
+            </Center>
+        </Box>
+        <Box bg={"white"}
+            w={"100%"}
+            p={4}
+            borderRadius={"lg"}
+            color={"black"}
+            borderWidth={"1px"}>
+            <Tabs variant='soft-rounded' colorScheme='blue'>
+                <TabList>
+                    <Tab width={"50%"}>Login</Tab>
+                    <Tab width={"50%"}>Sign Up</Tab>
+                </TabList>
+                <TabPanels >
+                    <TabPanel >
+                        <Login />
+                    </TabPanel>
+                    <TabPanel >
+                        <SignUp />
+                    </TabPanel>
+                </TabPanels>
+            </Tabs>
+        </Box>
+    </Container>
 }
 
-export default HomePage
+export default AuthPage

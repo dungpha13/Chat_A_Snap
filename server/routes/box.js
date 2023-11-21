@@ -1,6 +1,6 @@
 import express from 'express'
-import { createBox, deleteBox, getBox, getBoxes, getUserInBox, joinBox, updateBox } from '../controllers/box.js'
-import { verifyAdmin, verifyToken, verifyUser } from '../middlewares/verifyToken.js'
+import { createBox, deleteBox, getBox, getBoxByUser, getBoxes, getMessageInBox, getUserInBox, joinBox, updateBox } from '../controllers/box.js'
+import { verifyToken } from '../middlewares/verifyToken.js'
 
 const router = express.Router()
 
@@ -24,5 +24,11 @@ router.post('/api/joinBox', joinBox)
 
 //get all user in box
 router.get('/api/getUserInBox/:id', getUserInBox)
+
+//get all message in box
+router.get('/api/getMessageInBox/:id', getMessageInBox)
+
+//get box by user
+router.get('/api/getBoxByUser', verifyToken, getBoxByUser)
 
 export default router

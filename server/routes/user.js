@@ -1,11 +1,11 @@
 import express from 'express'
-import { deleteUser, getUser, getUsers, updateUser } from '../controllers/user.js'
-import { verifyAdmin, verifyToken, verifyUser } from '../middlewares/verifyToken.js'
+import { deleteUser, getUser, getUserByNameOrEmail, getUsers, updateUser } from '../controllers/user.js'
+import { verifyToken } from '../middlewares/verifyToken.js'
 
 const router = express.Router()
 
 //checkUser
-router.get('/api/checkUser/:id', verifyToken, verifyUser, (req, res) => {
+router.get('/api/checkUser/:id', verifyToken, (req, res) => {
     res.json("You are user!")
 })
 
@@ -29,5 +29,7 @@ router.get('/api/get/:id', getUser)
 //get all users
 router.get('/api/get', getUsers)
 
+//get user by name or email
+router.get('/api/getByNameOrEmail', verifyToken, getUserByNameOrEmail)
 
 export default router

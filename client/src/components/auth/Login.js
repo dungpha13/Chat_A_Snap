@@ -1,7 +1,7 @@
-import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, VStack, useToast } from '@chakra-ui/react'
+import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, Text, VStack, cookieStorageManager, createCookieStorageManager, theme, useToast } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 const Login = () => {
 
@@ -36,9 +36,9 @@ const Login = () => {
             password,
         })
             .then(({ data }) => {
-                console.log(data);
                 toast({
-                    title: "Login Successful",
+                    title: "Login successfully.",
+                    description: "Welcome back!",
                     status: "success",
                     duration: 5000,
                     isClosable: true,
@@ -46,10 +46,11 @@ const Login = () => {
                 });
                 localStorage.setItem("userInfo", JSON.stringify(data.data));
                 setLoading(false);
-                navigate("/home");
+                navigate("/chats");
             }).catch(({ response }) => {
                 toast({
-                    title: response.data.message,
+                    title: "Login failed.",
+                    description: response.data.message,
                     status: "error",
                     duration: 5000,
                     isClosable: true,
@@ -102,6 +103,7 @@ const Login = () => {
         >
             Login
         </Button>
+        <Text>Don't have any account ? <Link to="/">Sign Up</Link></Text>
     </VStack>
 }
 
