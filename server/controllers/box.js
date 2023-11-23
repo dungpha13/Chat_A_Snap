@@ -2,6 +2,7 @@ import { createError } from "../common/error.js"
 import User from "../models/User.js";
 import Box from "../models/Box.js";
 import Message from "../models/Message.js";
+import { Op } from "sequelize";
 
 //create box
 export const createBox = async (req, res, next) => {
@@ -206,7 +207,20 @@ export const getBoxByUser = async (req, res, next) => {
                 through: {
                     attributes: [],
                 },
-            }]
+            },
+            {
+                model: Message,
+                as: 'Messages',
+                include: [{
+                    model: User,
+                    as: 'Author',
+                    attributes: { exclude: ['username', 'password'] },
+                    // through: {
+                    //     attributes: [],
+                    // },
+                }]
+            }
+        ]
     })
         .then(async (result) => {
             if (!result.length) {
@@ -214,7 +228,13 @@ export const getBoxByUser = async (req, res, next) => {
             } else {
                 const results = await Promise.all(result.map(async (box) => {
                     const allMembers = await box.getMembers({
-                        attributes: { exclude: ['username', 'password'] },
+                        attributes: {
+                            exclude: ['username', 'password'],
+                        },
+
+                        // where: {
+                        //     id: 2
+                        // }
                     });
                     const result = { ...box.dataValues, allMembers };
                     return result;
@@ -230,5 +250,240 @@ export const getBoxByUser = async (req, res, next) => {
         });
 }
 
+//access chat
+export const accessChat = async (req, res, next) => {
+    await Box.findAll({
+        where: {
+            isGroupChat: false,
+        },
+        include: [{
+            model: User,
+            as: 'Members',
+            attributes: { exclude: ['username', 'password'] },
+            where: { id: req.user.id },
+            through: {
+                attributes: [],
+            },
+        }, {
+            model: Message,
+            as: 'Messages',
+            include: [{
+                model: User,
+                as: 'Author',
+                attributes: { exclude: ['username', 'password'] },
+            }]
+        }]
+    })
+        .then(async (result) => {
+            if (result.length > 0) {
+                const sender = await User.findOne({
+                    where: {
+                        id: req.body.userId
+                    }
+                })
+                if (!sender) {
+                    next(404, "User not found!")
+                } else {
+                    const boxes = await Promise.all(result.map(async (box) => {
+                        const isSender = await box.hasMembers(sender);
+                        return { box, isSender };
+                    }));
 
+                    const filteredBoxes = boxes.filter(({ isSender }) => isSender === true).map(({ box }) => box);
+                    console.log(filteredBoxes);
+                    if (filteredBoxes.length > 0) {
+                        const allMembers = await filteredBoxes[0].getMembers({
+                            attributes: {
+                                exclude: ['username', 'password'],
+                            },
+                        });
+                        const resultDTO = { ...filteredBoxes[0].dataValues, allMembers };
+                        res.status(200).json({
+                            status: 200,
+                            message: "ok",
+                            data: resultDTO
+                        })
+                    } else {
+                        await User.findAll({
+                            where: {
+                                id: [req.user.id, req.body.userId]
+                            }
+                        })
+                            .then(async (users) => {
+                                if (users.length >= 2) {
+                                    var chatData = {
+                                        boxName: "sender",
+                                        description: "single chat",
+                                        isGroupChat: false,
+                                    };
+                                    await Box.create(chatData)
+                                        .then(async (box) => {
+                                            if (box) {
+                                                await Promise.all(users.map(async (user) => {
+                                                    if (user.id === req.user.id) {
+                                                        await box.setCreator(user);
+                                                    }
+                                                    await box.addMembers(user, { through: { isAdmin: true } });
+                                                }))
+                                                    .then(async (result) => {
+                                                        if (result) {
+                                                            await box.getMembers({
+                                                                attributes: {
+                                                                    exclude: ['username', 'password'],
+                                                                },
+                                                            }).then(async (allMembers) => {
+                                                                if (allMembers) {
+                                                                    await box.getMessages()
+                                                                        .then((Messages) => {
+                                                                            const resultDTO = { ...box.dataValues, allMembers, Messages };
+                                                                            res.status(200).json({
+                                                                                status: 200,
+                                                                                message: "ok",
+                                                                                data: resultDTO
+                                                                            })
+                                                                        }).catch((err) => {
+                                                                            next(err)
+                                                                        });
+                                                                }
+                                                            }).catch((err) => {
+                                                                next(err)
+                                                            });
+                                                        }
+                                                    }).catch((err) => {
+                                                        next(err)
+                                                    });
+                                            } else {
+                                                next(createError(404, "Box create fail"))
+                                            }
+                                        }).catch((err) => {
+                                            next(err)
+                                        });
+                                } else {
+                                    next(createError(404, "User don't exist"))
+                                }
+                            }).catch((err) => {
+                                next(err)
+                            });
+                    }
+                }
+            } else {
+                await User.findAll({
+                    where: {
+                        id: [req.user.id, req.body.userId]
+                    }
+                })
+                    .then(async (users) => {
+                        // console.log(users);
+                        if (users.length >= 2) {
+                            var chatData = {
+                                boxName: "sender",
+                                description: "single chat",
+                                isGroupChat: false,
+                            };
+                            await Box.create(chatData)
+                                .then(async (box) => {
+                                    if (box) {
+                                        users.map(async (user) => {
+                                            if (user.id === req.user.id) {
+                                                await box.setCreator(user)
+                                            }
+                                            await box.addMembers(user, { through: { isAdmin: true } })
+                                        });
+                                        const allMembers = await box.getMembers({
+                                            attributes: {
+                                                exclude: ['username', 'password'],
+                                            },
+                                        });
+                                        const resultDTO = { ...box.dataValues, allMembers };
+                                        res.status(200).json({
+                                            status: 200,
+                                            message: "ok",
+                                            data: resultDTO
+                                        })
+                                    }
+                                    else {
+                                        next(createError(404, "Box create fail"))
+                                    }
+                                }).catch((err) => {
+                                    next(err)
+                                });
+                        } else {
+                            next(createError(404, "User don't exist"))
+                        }
+                    }).catch((err) => {
+                        next(err)
+                    });
+            }
+        }).catch((err) => {
+            next(err)
+        });
+}
+
+//create group chat
+export const createGroupChat = async (req, res, next) => {
+    var members = JSON.parse(req.body.members)
+    if (members.length < 2) {
+        next(createError(400, "More than 2 users are required to form a group chat"))
+    } else {
+        members.push(req.user.id)
+        await User.findAll({
+            where: { id: members }
+        })
+            .then(async (members) => {
+                if (members.length > 0) {
+                    await Box.create({
+                        boxName: req.body.boxName,
+                        description: "group chat",
+                        isGroupChat: true
+                    })
+                        .then(async (box) => {
+                            if (box) {
+                                await Promise.all(members.map(async (user) => {
+                                    if (user.id === req.user.id) {
+                                        await box.setCreator(user);
+                                        await box.addMembers(user, { through: { isAdmin: true } });
+                                    }
+                                    await box.addMembers(user);
+                                }))
+                                    .then(async (result) => {
+                                        if (result) {
+                                            await box.getMembers({
+                                                attributes: {
+                                                    exclude: ['username', 'password'],
+                                                },
+                                            }).then(async (allMembers) => {
+                                                if (allMembers) {
+                                                    await box.getMessages()
+                                                        .then((Messages) => {
+                                                            const resultDTO = { ...box.dataValues, allMembers, Messages };
+                                                            res.status(200).json({
+                                                                status: 200,
+                                                                message: "ok",
+                                                                data: resultDTO
+                                                            })
+                                                        }).catch((err) => {
+                                                            next(err)
+                                                        });
+                                                }
+                                            }).catch((err) => {
+                                                next(err)
+                                            });
+                                        }
+                                    }).catch((err) => {
+                                        next(err)
+                                    });
+                            } else {
+                                next(createError(404, "Box create fail"))
+                            }
+                        }).catch((err) => {
+                            next(err)
+                        });
+                } else {
+                    next(404, "User not found")
+                }
+            }).catch((err) => {
+                next(err)
+            });
+    }
+}
 

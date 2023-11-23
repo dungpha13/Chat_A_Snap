@@ -1,5 +1,5 @@
 import express from 'express'
-import { createBox, deleteBox, getBox, getBoxByUser, getBoxes, getMessageInBox, getUserInBox, joinBox, updateBox } from '../controllers/box.js'
+import { accessChat, createBox, createGroupChat, deleteBox, getBox, getBoxByUser, getBoxes, getMessageInBox, getUserInBox, joinBox, updateBox } from '../controllers/box.js'
 import { verifyToken } from '../middlewares/verifyToken.js'
 
 const router = express.Router()
@@ -30,5 +30,11 @@ router.get('/api/getMessageInBox/:id', getMessageInBox)
 
 //get box by user
 router.get('/api/getBoxByUser', verifyToken, getBoxByUser)
+
+//access chat
+router.post('/api/accessChat', verifyToken, accessChat)
+
+//create group chat
+router.post('/api/createGroup', verifyToken, createGroupChat)
 
 export default router

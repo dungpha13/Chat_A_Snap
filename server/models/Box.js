@@ -20,7 +20,7 @@ const Box = sequelize.define(tableName, {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    status: {
+    isGroupChat: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
     }

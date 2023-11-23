@@ -1,4 +1,4 @@
-import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, Text, VStack, cookieStorageManager, createCookieStorageManager, theme, useToast } from '@chakra-ui/react'
+import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, Text, VStack, useToast } from '@chakra-ui/react'
 import React, { useState } from 'react'
 import axios from 'axios'
 import { Link, useNavigate } from 'react-router-dom'
@@ -103,7 +103,6 @@ const Login = () => {
         >
             Login
         </Button>
-        <Text>Don't have any account ? <Link to="/">Sign Up</Link></Text>
     </VStack>
 }
 

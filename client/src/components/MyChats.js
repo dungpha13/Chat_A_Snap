@@ -4,6 +4,7 @@ import { Avatar, AvatarGroup, Box, Stack, Text, useToast } from '@chakra-ui/reac
 import { ChatState } from '../context/ChatProvider';
 import ChatLoading from './ChatLoading';
 import GroupChatModal from './miscellaneous/GroupChatModal';
+import { getLastestMsg, getSender } from '../config/ChatLogic';
 
 const MyChats = ({ fetchAgain }) => {
 
@@ -15,7 +16,6 @@ const MyChats = ({ fetchAgain }) => {
     const fetchChats = async () => {
         try {
             const { data } = await axios.get("http://localhost:8080/box/api/getBoxByUser");
-            // console.log(data.data[0].allMembers);
             setChats(data.data)
         } catch (error) {
             toast({
@@ -82,34 +82,19 @@ const MyChats = ({ fetchAgain }) => {
                                 borderRadius="lg"
                                 key={chat.id}
                             >
-                                <Stack direction="row" justifyContent="space-between">
-                                    <Stack spacing={1} direction="column">
-                                        <Text fontSize="xl">
-                                            {chat.boxName}
-                                        </Text>
-                                        <Text fontSize="sm">
-                                            {chat.description}
-                                        </Text>
-                                    </Stack>
-                                    <AvatarGroup size='sm' max={2}>
-                                        {chat.allMembers.map((member) => {
-                                            return <Avatar key={member.id} name={member.fullName} />
-                                        })}
-                                    </AvatarGroup>
-                                </Stack>
-                                {/* <Text>
+                                <Text>
                                     {!chat.isGroupChat
-                                        ? getSender(loggedUser, chat.users)
-                                        : chat.chatName}
-                                </Text> */}
-                                {/* {chat.latestMessage && (
+                                        ? getSender(user, chat.allMembers)
+                                        : chat.boxName}
+                                </Text>
+                                {getLastestMsg(chat.Messages) && (
                                     <Text fontSize="xs">
-                                        <b>{chat.latestMessage.sender.name} : </b>
-                                        {chat.latestMessage.content.length > 50
-                                            ? chat.latestMessage.content.substring(0, 51) + "..."
-                                            : chat.latestMessage.content}
+                                        <b>{getLastestMsg(chat.Messages).Author.fullName} : </b>
+                                        {getLastestMsg(chat.Messages).content.length > 50
+                                            ? getLastestMsg(chat.Messages).content.substring(0, 51) + "..."
+                                            : getLastestMsg(chat.Messages).content}
                                     </Text>
-                                )} */}
+                                )}
                             </Box>
                         ))}
                     </Stack>

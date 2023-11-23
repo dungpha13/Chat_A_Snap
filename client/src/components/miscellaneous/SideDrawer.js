@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Button, Tooltip, Text, Menu, MenuButton, MenuList, Avatar, MenuItem, MenuDivider, Drawer, useDisclosure, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, Input, Stack, useToast } from '@chakra-ui/react'
+import { Box, Button, Tooltip, Text, Menu, MenuButton, MenuList, Avatar, MenuItem, MenuDivider, Drawer, useDisclosure, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, Input, Stack, useToast, Spinner } from '@chakra-ui/react'
 import { BellIcon, ChevronDownIcon } from '@chakra-ui/icons'
 import ProfileModal from './ProfileModal'
 import { ChatState } from '../../context/ChatProvider'
@@ -18,14 +18,37 @@ const SideDrawer = () => {
     const [loading, setLoading] = useState(false)
     const [loadingChat, setLoadingChat] = useState(false)
 
-    const { user } = ChatState()
+    const {
+        setSelectedChat,
+        user,
+        notification,
+        setNotification,
+        chats,
+        setChats } = ChatState()
     const toast = useToast()
     const navigate = useNavigate()
 
-    const accessChat = async () => {
-        setLoadingChat(true)
-        const { data } = await axios.post()
-    }
+    const accessChat = async (userId) => {
+        try {
+            console.log(userId);
+            setLoadingChat(true);
+            const { data } = await axios.post("http://localhost:8080/box/api/accessChat", { userId });
+            console.log(data.data);
+            if (!chats.find((c) => c.id === data.data.id)) setChats([data.data, ...chats]);
+            setSelectedChat(data.data);
+            setLoadingChat(false);
+            onClose();
+        } catch (error) {
+            toast({
+                title: "Error fetching the chat",
+                description: error.message,
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+                position: "bottom-left",
+            });
+        }
+    };
 
     const handleSearch = async () => {
         if (!search) {
@@ -149,6 +172,7 @@ const SideDrawer = () => {
                                 />
                             ))
                         )}
+                        {loadingChat && <Spinner ml="auto" d="flex" />}
                     </DrawerBody>
                 </DrawerContent>
             </Drawer>

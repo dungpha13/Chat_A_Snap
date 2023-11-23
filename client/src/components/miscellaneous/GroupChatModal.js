@@ -1,12 +1,104 @@
 import { AddIcon } from '@chakra-ui/icons'
-import { Button, FormControl, FormErrorMessage, FormLabel, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from '@chakra-ui/react'
 import React, { useState } from 'react'
+import axios from 'axios'
+import { Box, Button, FormControl, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure, useToast } from '@chakra-ui/react'
+import UserBadgeItem from '../UserAvatar/UserBadgeItem'
+import UserListItem from '../UserAvatar/UserListItem'
+import { ChatState } from '../../context/ChatProvider'
 
 const GroupChatModal = () => {
-
-    const [fullName, setFullName] = useState('')
-
     const { isOpen, onOpen, onClose } = useDisclosure()
+    const [groupChatName, setGroupChatName] = useState();
+    const [selectedUsers, setSelectedUsers] = useState([]);
+    const [searchResult, setSearchResult] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const { chats, setChats } = ChatState();
+
+    const toast = useToast();
+
+    const handleSearch = async (search) => {
+        if (!search) {
+            return
+        }
+        setLoading(true)
+        await axios.get(`http://localhost:8080/user/api/getByNameOrEmail?search=${search}`)
+            .then(({ data }) => {
+                setSearchResult(data.data)
+                setLoading(false);
+            }).catch((error) => {
+                toast({
+                    title: "Error occured!",
+                    description: "Failed to Load the Search Results",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "bottom-left",
+                });
+            });
+    }
+
+    const handleDelete = (delUser) => {
+        setSelectedUsers(selectedUsers.filter((user) => user.id !== delUser.id));
+    }
+
+    const handleGroup = (userToAdd) => {
+        if (selectedUsers.includes(userToAdd)) {
+            toast({
+                title: "User already added",
+                status: "warning",
+                duration: 5000,
+                isClosable: true,
+                position: "top",
+            });
+            return;
+        }
+
+        setSelectedUsers([...selectedUsers, userToAdd]);
+    };
+
+
+    const handleSubmit = async () => {
+        if (!groupChatName || !selectedUsers) {
+            toast({
+                title: "Please fill all the feilds",
+                status: "warning",
+                duration: 5000,
+                isClosable: true,
+                position: "top",
+            });
+            return;
+        }
+        await axios.post(
+            "http://localhost:8080/box/api/createGroup",
+            {
+                boxName: groupChatName,
+                members: JSON.stringify(selectedUsers.map((u) => u.id)),
+            }
+        )
+            .then(({ data }) => {
+                console.log(data.data);
+                setChats([data.data, ...chats]);
+                onClose();
+                toast({
+                    title: "New Group Chat Created!",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "bottom",
+                });
+            }).catch((err) => {
+                toast({
+                    title: "Failed to Create the Chat!",
+                    description: err.response.data,
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "bottom",
+                });
+            });
+
+    }
 
     return (
         <>
@@ -18,29 +110,60 @@ const GroupChatModal = () => {
             >
                 New Group Chat
             </Button>
-            <Modal isOpen={isOpen} onClose={onClose}>
+            <Modal onClose={onClose} isOpen={isOpen} isCentered>
                 <ModalOverlay />
                 <ModalContent>
-                    <ModalHeader textAlign="center">Modal Title</ModalHeader>
+                    <ModalHeader
+                        fontSize="35px"
+                        fontFamily="Work sans"
+                        d="flex"
+                        justifyContent="center"
+                    >
+                        Create Group Chat
+                    </ModalHeader>
                     <ModalCloseButton />
-                    <ModalBody>
-                        <FormControl id='full-name' isRequired isInvalid={fullName === ""}>
-                            <FormLabel>
-                                Name
-                            </FormLabel>
+                    <ModalBody d="flex" flexDir="column" alignItems="center">
+                        <FormControl>
                             <Input
-                                placeholder='Enter Your Name'
-                                onChange={(e) => setFullName(e.target.value)}
-                            >
-                            </Input>
-                            <FormErrorMessage>*Name is required</FormErrorMessage>
+                                placeholder="Chat Name"
+                                mb={3}
+                                onChange={(e) => setGroupChatName(e.target.value)}
+                            />
                         </FormControl>
+                        <FormControl>
+                            <Input
+                                placeholder="Add Users eg: dundun, tinaa, ..."
+                                mb={1}
+                                onChange={(e) => handleSearch(e.target.value)}
+                            />
+                        </FormControl>
+                        <Box w="100%" d="flex" flexWrap="wrap">
+                            {selectedUsers.map((u) => (
+                                <UserBadgeItem
+                                    key={u.id}
+                                    user={u}
+                                    handleFunction={() => handleDelete(u)}
+                                />
+                            ))}
+                        </Box>
+                        {loading ? (
+                            // <ChatLoading />
+                            <div>Loading...</div>
+                        ) : (
+                            searchResult
+                                ?.slice(0, 4)
+                                .map((user) => (
+                                    <UserListItem
+                                        key={user.id}
+                                        user={user}
+                                        handleFunction={() => handleGroup(user)}
+                                    />
+                                ))
+                        )}
                     </ModalBody>
-
                     <ModalFooter>
-                        <Button colorScheme='blue' mr={3}>Save</Button>
-                        <Button variant='ghost' onClick={onClose}>
-                            Close
+                        <Button onClick={handleSubmit} colorScheme="blue">
+                            Create Chat
                         </Button>
                     </ModalFooter>
                 </ModalContent>

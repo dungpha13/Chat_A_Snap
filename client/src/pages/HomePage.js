@@ -1,6 +1,6 @@
 import { Box, Center, Container, Tab, TabList, TabPanel, TabPanels, Tabs, Text } from '@chakra-ui/react'
-import React, { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import Login from '../components/auth/Login'
 import SignUp from '../components/auth/SignUp'
 
@@ -17,7 +17,7 @@ const AuthPage = () => {
 
     return <Container maxW='xl' centerContent>
         <Box
-            d='flex'
+            display='flex'
             justifyContent={"center"}
             p={3}
             bg={"white"}
@@ -54,10 +54,10 @@ const AuthPage = () => {
                     <Tab width={"50%"}>Sign Up</Tab>
                 </TabList>
                 <TabPanels >
-                    <TabPanel >
+                    <TabPanel>
                         <Login />
                     </TabPanel>
-                    <TabPanel >
+                    <TabPanel>
                         <SignUp />
                     </TabPanel>
                 </TabPanels>
