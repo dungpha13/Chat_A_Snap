@@ -1,11 +1,11 @@
-import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, Text, VStack, useToast } from '@chakra-ui/react'
+import { Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, VStack, useToast } from '@chakra-ui/react'
 import React, { useState } from 'react'
-import axios from 'axios'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { login } from '../../api/apiConfig'
 
 const Login = () => {
 
-    axios.defaults.withCredentials = true;
+
 
     const [show, setShow] = useState(false)
     const [username, setUserName] = useState()
@@ -30,11 +30,7 @@ const Login = () => {
             setLoading(false);
             return;
         }
-
-        await axios.post('http://localhost:8080/auth/api/login', {
-            username,
-            password,
-        })
+        await login(username, password)
             .then(({ data }) => {
                 toast({
                     title: "Login successfully.",

@@ -1,21 +1,20 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios';
-import { Avatar, AvatarGroup, Box, Stack, Text, useToast } from '@chakra-ui/react';
-import { ChatState } from '../context/ChatProvider';
+import { Box, Stack, Text, useToast } from '@chakra-ui/react';
 import ChatLoading from './ChatLoading';
 import GroupChatModal from './miscellaneous/GroupChatModal';
+import { ChatState } from '../context/ChatProvider';
 import { getLastestMsg, getSender } from '../config/ChatLogic';
+import { fetchChat } from '../api/apiConfig';
 
 const MyChats = ({ fetchAgain }) => {
 
-    const [loggedUser, setLoggedUser] = useState();
     const { selectedChat, setSelectedChat, user, chats, setChats } = ChatState();
 
     const toast = useToast();
 
     const fetchChats = async () => {
         try {
-            const { data } = await axios.get("http://localhost:8080/box/api/getBoxByUser");
+            const { data } = await fetchChat()
             setChats(data.data)
         } catch (error) {
             toast({
@@ -26,13 +25,14 @@ const MyChats = ({ fetchAgain }) => {
                 isClosable: true,
                 position: "bottom-left",
             });
+            setSelectedChat("")
+            setChats("")
         }
     };
 
     useEffect(() => {
-        setLoggedUser(JSON.parse(localStorage.getItem("userInfo")));
         fetchChats();
-        // eslint-disable-next-line
+        setSelectedChat(selectedChat)
     }, [fetchAgain]);
 
     return (
@@ -103,6 +103,7 @@ const MyChats = ({ fetchAgain }) => {
                 )}
             </Box>
         </Box>
+
     )
 }
 

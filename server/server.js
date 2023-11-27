@@ -9,31 +9,34 @@ import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 import { errorHandler } from './middlewares/errorHandler.js'
 import cors from 'cors'
+import { initSocket } from './socket.js'
 
 // ===== Config =====
-const server = express()
+const app = express()
 const PORT = process.env.PORT || 3001
 
 // ===== Middlewares =====
-server.use(cors({
+app.use(cors({
     origin: process.env.CLIENT_URL,
     credentials: true,
 }))
-server.use(cookieParser())
-server.use(bodyParser.json())
-server.use(bodyParser.urlencoded({ extended: true }))
+app.use(cookieParser())
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true }))
 
 // ===== Routes =====
-server.use('/user', userRouter)
-server.use('/auth', authRouter)
-server.use('/box', boxRouter)
-server.use('/message', messageRouter)
-server.use('/chatBox', chatBoxRouter)
+app.use('/user', userRouter)
+app.use('/auth', authRouter)
+app.use('/box', boxRouter)
+app.use('/message', messageRouter)
+app.use('/chatBox', chatBoxRouter)
 
 // ===== HandleError ====
-server.use(errorHandler)
+app.use(errorHandler)
 
 // ===== Server =====
-server.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Server is listening at http://localhost:${PORT}`)
 })
+
+initSocket(server)

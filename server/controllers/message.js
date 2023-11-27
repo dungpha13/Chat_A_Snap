@@ -6,22 +6,39 @@ import Box from "../models/Box.js";
 
 //create Message
 export const createMessage = async (req, res, next) => {
-    const { userId, boxId, ...otherDetails } = req.body
-    await User.findOne({ where: { id: userId } })
+    const { boxId, content } = req.body
+    await User.findOne({ where: { id: req.user.id } })
         .then(async (user) => {
             if (user) {
                 await Box.findOne({ where: { id: boxId } })
                     .then(async (box) => {
                         if (box) {
                             if (await box.hasMembers(user)) {
-                                await Message.create(otherDetails)
+                                await Message.create({
+                                    content: content
+                                })
                                     .then(async (message) => {
                                         await message.setAuthor(user)
                                         await message.setBox(box)
+                                        const Box = await message.getBox({
+                                            include: [{
+                                                model: User,
+                                                as: 'Members',
+                                                attributes: {
+                                                    exclude: ['username', 'password'],
+                                                }
+                                            }]
+                                        })
+                                        const Author = await message.getAuthor({
+                                            attributes: {
+                                                exclude: ['username', 'password'],
+                                            }
+                                        })
+                                        const result = { ...message.dataValues, Box, Author };
                                         res.status(201).json({
                                             status: 201,
                                             message: "Create successfully",
-                                            data: message
+                                            data: result
                                         })
                                     }).catch((err) => {
                                         next(err)
@@ -32,7 +49,6 @@ export const createMessage = async (req, res, next) => {
                         } else {
                             next(createError(404, "Box not found!"))
                         }
-
                     }).catch((err) => {
                         next(err)
                     });
@@ -45,9 +61,9 @@ export const createMessage = async (req, res, next) => {
 }
 
 //update Message
-// export const updateMessage = async (req, res, next) => {
+export const updateMessage = async (req, res, next) => {
 
-// }
+}
 
 //delete Message
 export const deleteMessage = async (req, res, next) => {
@@ -63,13 +79,40 @@ export const deleteMessage = async (req, res, next) => {
 }
 
 //get Message by id
-// export const getMessage = async (req, res, next) => {
+export const getMessage = async (req, res, next) => {
 
-// }
+}
 
 //get all Message
 export const getMessages = async (req, res, next) => {
-    await Message.findAll()
+    await Message.findAll({
+        order: [
+            ['id', 'ASC']
+        ],
+        include: [
+            {
+                model: Box,
+                as: 'Box',
+                where: {
+                    id: req.params.boxId
+                },
+                include: [{
+                    model: User,
+                    as: 'Members',
+                    attributes: {
+                        exclude: ['username', 'password']
+                    }
+                }]
+            },
+            {
+                model: User,
+                as: 'Author',
+                attributes: {
+                    exclude: ['username', 'password']
+                }
+            }
+        ]
+    })
         .then((result) => {
             if (!result) {
                 next(createError(404, "List Box empty!"))

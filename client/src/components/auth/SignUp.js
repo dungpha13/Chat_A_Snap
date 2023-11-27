@@ -1,6 +1,6 @@
-import axios from 'axios'
 import React, { useState } from 'react'
-import { Button, FormControl, FormErrorMessage, FormLabel, Input, InputGroup, InputRightElement, Text, VStack, useToast } from '@chakra-ui/react'
+import { Button, FormControl, FormErrorMessage, FormLabel, Input, InputGroup, InputRightElement, VStack, useToast } from '@chakra-ui/react'
+import { register } from '../../api/apiConfig'
 
 const SignUp = () => {
     const [show, setShow] = useState(false)
@@ -29,12 +29,7 @@ const SignUp = () => {
             return;
         }
 
-        await axios.post('http://localhost:8080/auth/api/register', {
-            username,
-            password,
-            fullName,
-            email
-        })
+        await register(username, password, fullName, email)
             .then(({ data }) => {
                 console.log(data);
                 toast({

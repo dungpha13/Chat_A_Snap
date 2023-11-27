@@ -1,15 +1,15 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Box, Button, Tooltip, Text, Menu, MenuButton, MenuList, Avatar, MenuItem, MenuDivider, Drawer, useDisclosure, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, Input, Stack, useToast, Spinner } from '@chakra-ui/react'
+import { Box, Button, Tooltip, Text, Menu, MenuButton, MenuList, Avatar, MenuItem, MenuDivider, Drawer, useDisclosure, DrawerOverlay, DrawerContent, DrawerHeader, DrawerBody, Input, useToast, Spinner } from '@chakra-ui/react'
 import { BellIcon, ChevronDownIcon } from '@chakra-ui/icons'
 import ProfileModal from './ProfileModal'
-import { ChatState } from '../../context/ChatProvider'
-import axios from 'axios'
 import ChatLoading from '../ChatLoading'
 import UserListItem from '../UserAvatar/UserListItem'
+import { ChatState } from '../../context/ChatProvider'
+import { getUserByNameOrEmail } from '../../api/apiConfig'
 
 
-const SideDrawer = () => {
+const SideDrawer = ({ fetchAgain, setFetchAgain }) => {
 
     const { isOpen, onOpen, onClose } = useDisclosure()
 
@@ -25,16 +25,20 @@ const SideDrawer = () => {
         setNotification,
         chats,
         setChats } = ChatState()
+
     const toast = useToast()
     const navigate = useNavigate()
 
     const accessChat = async (userId) => {
         try {
-            console.log(userId);
             setLoadingChat(true);
-            const { data } = await axios.post("http://localhost:8080/box/api/accessChat", { userId });
-            console.log(data.data);
-            if (!chats.find((c) => c.id === data.data.id)) setChats([data.data, ...chats]);
+            const { data } = await accessChat(userId)
+            if (!chats) {
+                setChats([data.data]);
+                setFetchAgain(!fetchAgain)
+            } else {
+                if (!chats.find((c) => c.id === data.data.id)) setChats([data.data, ...chats]);
+            }
             setSelectedChat(data.data);
             setLoadingChat(false);
             onClose();
@@ -63,7 +67,7 @@ const SideDrawer = () => {
             return
         }
         setLoading(true)
-        await axios.get(`http://localhost:8080/user/api/getByNameOrEmail?search=${search}`)
+        await getUserByNameOrEmail(search)
             .then(({ data }) => {
                 setSearchResult(data.data)
                 setLoading(false);

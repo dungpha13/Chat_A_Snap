@@ -1,10 +1,10 @@
 import { AddIcon } from '@chakra-ui/icons'
 import React, { useState } from 'react'
-import axios from 'axios'
 import { Box, Button, FormControl, Input, Modal, ModalBody, ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure, useToast } from '@chakra-ui/react'
 import UserBadgeItem from '../UserAvatar/UserBadgeItem'
-import UserListItem from '../UserAvatar/UserListItem'
 import { ChatState } from '../../context/ChatProvider'
+import UserListItem from '../UserAvatar/UserListItem'
+import { createGroupChat, getUserByNameOrEmail } from '../../api/apiConfig'
 
 const GroupChatModal = () => {
     const { isOpen, onOpen, onClose } = useDisclosure()
@@ -22,7 +22,7 @@ const GroupChatModal = () => {
             return
         }
         setLoading(true)
-        await axios.get(`http://localhost:8080/user/api/getByNameOrEmail?search=${search}`)
+        await getUserByNameOrEmail(search)
             .then(({ data }) => {
                 setSearchResult(data.data)
                 setLoading(false);
@@ -69,13 +69,7 @@ const GroupChatModal = () => {
             });
             return;
         }
-        await axios.post(
-            "http://localhost:8080/box/api/createGroup",
-            {
-                boxName: groupChatName,
-                members: JSON.stringify(selectedUsers.map((u) => u.id)),
-            }
-        )
+        await createGroupChat(groupChatName, selectedUsers)
             .then(({ data }) => {
                 console.log(data.data);
                 setChats([data.data, ...chats]);

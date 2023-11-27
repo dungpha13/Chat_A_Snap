@@ -130,8 +130,8 @@ export const joinBox = async (req, res, next) => {
         });
 }
 
-//get all user in box
-export const getUserInBox = async (req, res, next) => {
+//fetch admin group
+export const getAdminGroup = async (req, res, next) => {
     await Box.findOne({
         where: req.params
         , include: [{
@@ -140,7 +140,7 @@ export const getUserInBox = async (req, res, next) => {
             attributes: { exclude: ['username', 'password'] },
             through: {
                 attributes: [],
-                // where: { isAdmin: false }
+                where: { isAdmin: true }
             }
         }]
     })
@@ -290,7 +290,6 @@ export const accessChat = async (req, res, next) => {
                     }));
 
                     const filteredBoxes = boxes.filter(({ isSender }) => isSender === true).map(({ box }) => box);
-                    console.log(filteredBoxes);
                     if (filteredBoxes.length > 0) {
                         const allMembers = await filteredBoxes[0].getMembers({
                             attributes: {
@@ -383,25 +382,51 @@ export const accessChat = async (req, res, next) => {
                             await Box.create(chatData)
                                 .then(async (box) => {
                                     if (box) {
-                                        users.map(async (user) => {
+                                        await Promise.all(users.map(async (user) => {
                                             if (user.id === req.user.id) {
-                                                await box.setCreator(user)
+                                                await box.setCreator(user);
                                             }
-                                            await box.addMembers(user, { through: { isAdmin: true } })
-                                        });
-                                        const allMembers = await box.getMembers({
-                                            attributes: {
-                                                exclude: ['username', 'password'],
-                                            },
-                                        });
-                                        const resultDTO = { ...box.dataValues, allMembers };
-                                        res.status(200).json({
-                                            status: 200,
-                                            message: "ok",
-                                            data: resultDTO
-                                        })
-                                    }
-                                    else {
+                                            await box.addMembers(user, { through: { isAdmin: true } });
+                                        }))
+                                            .then(async (result) => {
+                                                if (result) {
+                                                    await box.getMembers({
+                                                        attributes: {
+                                                            exclude: ['username', 'password'],
+                                                        },
+                                                    }).then(async (allMembers) => {
+                                                        if (allMembers) {
+                                                            await box.getMessages()
+                                                                .then((Messages) => {
+                                                                    const resultDTO = { ...box.dataValues, allMembers, Messages };
+                                                                    res.status(200).json({
+                                                                        status: 200,
+                                                                        message: "ok",
+                                                                        data: resultDTO
+                                                                    })
+                                                                }).catch((err) => {
+                                                                    next(err)
+                                                                });
+                                                        }
+                                                    }).catch((err) => {
+                                                        next(err)
+                                                    });
+                                                }
+                                            }).catch((err) => {
+                                                next(err)
+                                            });
+                                        // const allMembers = await box.getMembers({
+                                        //     attributes: {
+                                        //         exclude: ['username', 'password'],
+                                        //     },
+                                        // });
+                                        // const resultDTO = { ...box.dataValues, allMembers };
+                                        // res.status(200).json({
+                                        //     status: 200,
+                                        //     message: "ok",
+                                        //     data: resultDTO
+                                        // })
+                                    } else {
                                         next(createError(404, "Box create fail"))
                                     }
                                 }).catch((err) => {
@@ -487,3 +512,166 @@ export const createGroupChat = async (req, res, next) => {
     }
 }
 
+//remove user from group chat
+export const removeUser = async (req, res, next) => {
+    await User.findOne({
+        where: {
+            id: req.body.userId
+        }
+    })
+        .then(async (user) => {
+            if (user) {
+                await Box.findOne({
+                    where: { id: req.body.boxId }
+                })
+                    .then(async (box) => {
+                        if (box) {
+                            await box.removeMembers(user)
+                                .then(async (result) => {
+                                    if (result) {
+                                        await box.getMembers({
+                                            attributes: {
+                                                exclude: ['username', 'password'],
+                                            },
+                                        }).then(async (allMembers) => {
+                                            if (allMembers) {
+                                                await box.getMessages()
+                                                    .then((Messages) => {
+                                                        const resultDTO = { ...box.dataValues, allMembers, Messages };
+                                                        res.status(200).json({
+                                                            status: 200,
+                                                            message: "ok",
+                                                            data: resultDTO
+                                                        })
+                                                    }).catch((err) => {
+                                                        next(err)
+                                                    });
+                                            }
+                                        }).catch((err) => {
+                                            next(err)
+                                        });
+                                    } else {
+                                        next(createError(400, "Remove failed!"))
+                                    }
+                                }).catch((err) => {
+                                    next(err)
+                                });
+                        } else {
+                            next(createError(404, "Box not found!"))
+                        }
+                    }).catch((err) => {
+                        next(err)
+                    });
+            } else {
+                next(createError(404, "User not found!"))
+            }
+        }).catch((err) => {
+            next(err)
+        });
+}
+
+//add user to group chat
+export const addUser = async (req, res, next) => {
+    await Box.findOne({
+        where: { id: req.body.boxId }
+    })
+        .then(async (box) => {
+            if (box) {
+                await User.findOne({
+                    where: { id: req.body.userId }
+                })
+                    .then(async (user) => {
+                        if (user) {
+                            const isJoined = await box.hasMembers(user)
+                            if (!isJoined) {
+                                await box.addMembers(user)
+                                    .then(async (result) => {
+                                        if (result) {
+                                            await box.getMembers({
+                                                attributes: {
+                                                    exclude: ['username', 'password'],
+                                                },
+                                            }).then(async (allMembers) => {
+                                                if (allMembers) {
+                                                    await box.getMessages()
+                                                        .then((Messages) => {
+                                                            const resultDTO = { ...box.dataValues, allMembers, Messages };
+                                                            res.status(200).json({
+                                                                status: 200,
+                                                                message: "ok",
+                                                                data: resultDTO
+                                                            })
+                                                        }).catch((err) => {
+                                                            next(err)
+                                                        });
+                                                }
+                                            }).catch((err) => {
+                                                next(err)
+                                            });
+                                        } else {
+                                            next(createError(400, "Add failed!"))
+                                        }
+                                    }).catch((err) => {
+                                        next(err)
+                                    });
+                            } else {
+                                next(createError(400, "User already joined this box"))
+                            }
+                        } else {
+                            next(createError(404, "User not found!"))
+                        }
+                    }).catch((err) => {
+                        next(err)
+                    });
+            } else {
+                next(createError(404, "Box not found!"))
+            }
+        }).catch((err) => {
+            next(err)
+        });
+}
+
+//rename group chat
+export const renameGroup = async (req, res, next) => {
+    await Box.findOne({
+        where: { id: req.body.boxId }
+    })
+        .then(async (box) => {
+            if (box) {
+                await box.update({ boxName: req.body.boxName })
+                    .then(async (result) => {
+                        if (result) {
+                            await box.getMembers({
+                                attributes: {
+                                    exclude: ['username', 'password'],
+                                },
+                            }).then(async (allMembers) => {
+                                if (allMembers) {
+                                    await box.getMessages()
+                                        .then((Messages) => {
+                                            const resultDTO = { ...box.dataValues, allMembers, Messages };
+                                            res.status(200).json({
+                                                status: 200,
+                                                message: "ok",
+                                                data: resultDTO
+                                            })
+                                        }).catch((err) => {
+                                            next(err)
+                                        });
+                                }
+                            }).catch((err) => {
+                                next(err)
+                            });
+                        } else {
+                            next(createError(400, "Update failed!"))
+                        }
+                    }).catch((err) => {
+                        next(err)
+                    });
+            } else {
+                next(createError(404, "Box not found!"))
+            }
+        }).catch((err) => {
+            next(err)
+        });
+}
