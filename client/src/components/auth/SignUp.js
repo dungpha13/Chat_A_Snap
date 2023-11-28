@@ -55,6 +55,10 @@ const SignUp = () => {
             });
     }
 
+    const postDetails = () => {
+
+    }
+
     return <VStack spacing={'5px'}>
         <FormControl id='full-name' isRequired isInvalid={fullName === ""}>
             <FormLabel>
@@ -127,6 +131,15 @@ const SignUp = () => {
                 </InputRightElement>
             </InputGroup>
             <FormErrorMessage>*Comfirm password must match with password</FormErrorMessage>
+        </FormControl>
+        <FormControl id="pic">
+            <FormLabel>Upload your Picture*</FormLabel>
+            <Input
+                type="file"
+                p={1.5}
+                accept="image/*"
+                onChange={(e) => postDetails(e.target.files[0])}
+            />
         </FormControl>
         <Button
             colorScheme='blue'

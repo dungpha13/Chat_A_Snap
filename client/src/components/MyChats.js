@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { Box, Stack, Text, useToast } from '@chakra-ui/react';
 import ChatLoading from './ChatLoading';
 import GroupChatModal from './miscellaneous/GroupChatModal';
@@ -32,7 +32,6 @@ const MyChats = ({ fetchAgain }) => {
 
     useEffect(() => {
         fetchChats();
-        setSelectedChat(selectedChat)
     }, [fetchAgain]);
 
     return (

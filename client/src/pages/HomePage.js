@@ -38,7 +38,7 @@ const AuthPage = () => {
                     fontWeight='extrabold'
                     fontFamily="Work sans"
                 >
-                    FFYS
+                    Chat a snap!
                 </Text>
             </Center>
         </Box>

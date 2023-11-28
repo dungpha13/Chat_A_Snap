@@ -120,7 +120,7 @@ const SideDrawer = ({ fetchAgain, setFetchAgain }) => {
                     color="black"
                     fontWeight='extrabold'
                 >
-                    F-F-Y-S
+                    Chat a snap!
                 </Text>
                 <div
                     style={{ display: 'flex', justifyContent: 'center' }}
